@@ -107,7 +107,7 @@ export async function pollLoop({
               } catch {
                 console.error("could not parse payload");
               }
-              console.log(`[${role}] payload:`, payload);
+              console.log({ payload, role }, "retrieved payload from queue");
 
               if (role === "second") {
                 console.log(
