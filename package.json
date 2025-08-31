@@ -1,5 +1,5 @@
 {
-  "name": "sns-sqs_ping-pong",
+  "name": "distributed-tracing-with-aws-sns-sqs",
   "type": "module",
   "scripts": {
     "biome:check": "biome ci",
