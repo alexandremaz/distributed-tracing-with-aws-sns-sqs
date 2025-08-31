@@ -1,0 +1,35 @@
+name: 🔍 ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: 🔍 CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔎 Biome check
+        run: npm run biome:check
+
+      - name: 🧪 sort-package-json check
+        run: npm run sort-package-json:check
+
+      - name: 🦺 typecheck
+        run: npm run typecheck
