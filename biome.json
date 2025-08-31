@@ -32,10 +32,7 @@
           }
         }
       },
-      "includes": [
-        "package.json",
-        "package-lock.json"
-      ]
+      "includes": ["package.json", "package-lock.json"]
     }
   ],
   "vcs": {
