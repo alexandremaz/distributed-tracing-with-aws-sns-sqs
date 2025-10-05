@@ -52,8 +52,6 @@ export async function pollLoop({
   role: "first" | "second";
   myTopicName: string;
 }) {
-  assert(config.ROLE !== "provision");
-
   const { QueueUrl } = await sqs.send(
     new GetQueueUrlCommand({ QueueName: myQueueName }),
   );

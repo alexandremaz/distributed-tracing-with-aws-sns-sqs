@@ -36,20 +36,34 @@ services:
     volumes:
       - ./localstack-healthcheck.py:/localstack-healthcheck.py:ro
 
-  provision:
-    <<: *localstack-dns
-    build:
-      context: .
-      dockerfile: ./Dockerfile
-    depends_on:
-      localstack:
-        condition: service_healthy
-    environment:
-      <<: [*aws-environment-variables, *dd-trace-environment-variables]
-      ROLE: provision
-      DD_SERVICE: provision
+  terraform-init:
+    image: hashicorp/terraform:1.13.3
+    working_dir: /workspace
     volumes:
-      - ./src/:/app/src/
+      - ./terraform:/workspace
+    entrypoint: ["terraform"]
+    command: ["init"]
+
+  terraform-apply:
+    <<: *localstack-dns
+    image: hashicorp/terraform:1.13.3
+    depends_on:
+      terraform-init:
+        condition: service_completed_successfully
+    working_dir: /workspace
+    volumes:
+      - ./terraform:/workspace
+    entrypoint: ["terraform"]
+    command:
+      - apply
+      - "-auto-approve"
+      - "-var=AWS_REGION=${AWS_REGION}"
+      - "-var=AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}"
+      - "-var=AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}"
+      - "-var=AWS_ENDPOINT_URL_SNS=${AWS_ENDPOINT_URL_SNS}"
+      - "-var=AWS_ENDPOINT_URL_SQS=${AWS_ENDPOINT_URL_SQS}"
+    environment:
+      <<: *aws-environment-variables
 
   first-microservice:
     container_name: first-microservice
@@ -60,7 +74,7 @@ services:
     depends_on:
       localstack:
         condition: service_healthy
-      provision:
+      terraform-apply:
         condition: service_completed_successfully
     environment:
       <<:
@@ -73,8 +87,6 @@ services:
       MY_TOPIC: first-topic
       MY_QUEUE: first-queue
       DD_SERVICE: first-microservice
-    volumes:
-      - ./src/:/app/src/
 
   second-microservice:
     container_name: second-microservice
@@ -85,7 +97,7 @@ services:
     depends_on:
       localstack:
         condition: service_healthy
-      provision:
+      terraform-apply:
         condition: service_completed_successfully
     environment:
       <<:
@@ -98,8 +110,6 @@ services:
       MY_TOPIC: second-topic
       MY_QUEUE: second-queue
       DD_SERVICE: second-microservice
-    volumes:
-      - ./src/:/app/src/
 
   datadog:
     image: "gcr.io/datadoghq/agent:7"

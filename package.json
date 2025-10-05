@@ -6,7 +6,6 @@
     "biome:fix": "biome check --write",
     "build": "tsc",
     "dev": "node --watch --experimental-strip-types src/app.ts",
-    "provision": "node --experimental-strip-types src/app.ts",
     "sort-package-json:check": "sort-package-json --check",
     "sort-package-json:fix": "sort-package-json",
     "typecheck": "tsc --noEmit"
