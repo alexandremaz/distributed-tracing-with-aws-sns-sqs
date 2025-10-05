@@ -1,0 +1,12 @@
+{
+  "publishers": [
+    {
+      "name": "first",
+      "subscribers": ["second"]
+    },
+    {
+      "name": "second",
+      "subscribers": ["first"]
+    }
+  ]
+}

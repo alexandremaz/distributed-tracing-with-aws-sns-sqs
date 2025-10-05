@@ -53,6 +53,7 @@ services:
     working_dir: /workspace
     volumes:
       - ./terraform:/workspace
+      - ./topology/topology.json:/workspace/topology.json:ro
     entrypoint: ["terraform"]
     command:
       - apply
