@@ -1,3 +1,4 @@
+import assert from "node:assert";
 import { setTimeout } from "node:timers/promises";
 import {
   DeleteMessageCommand,
@@ -7,6 +8,7 @@ import {
   type ReceiveMessageCommandInput,
 } from "@aws-sdk/client-sqs";
 import { sqs } from "./aws.ts";
+import { config } from "./config/index.ts";
 import { publish } from "./publish.ts";
 import tracer from "./tracing.ts";
 
@@ -50,12 +52,26 @@ export async function pollLoop({
   role: "first" | "second";
   myTopicName: string;
 }) {
+  assert(config.ROLE !== "provision");
+
   const { QueueUrl } = await sqs.send(
     new GetQueueUrlCommand({ QueueName: myQueueName }),
   );
 
+  const region = config.AWS_REGION;
+
+  const queueProcessingSpanTags = {
+    aws_service: "SQS",
+    "aws.operation": "processMessage",
+    "aws.region": region,
+    ...(QueueUrl ? { "aws.sqs.queue_name": QueueUrl } : {}),
+    queuename: myQueueName,
+    region: region,
+    "span.kind": "consumer",
+  };
+
   for (;;) {
-    await setTimeout(500);
+    await setTimeout(config.POLLING_DELAY_MILLISECONDS);
 
     if (role === "first") {
       const payload = { from: role, hello: true, ts: Date.now() };
@@ -95,45 +111,49 @@ export async function pollLoop({
       const parentCtx = tracer.extract("text_map", carrier);
 
       console.log({ parentCtx }, "datadog parent context retrieved");
+
+      const tags = {
+        ...queueProcessingSpanTags,
+        ...(m.MessageId ? { "messaging.message_id": m.MessageId } : {}),
+      };
+
       await tracer.trace(
-        "poll",
-        { ...(parentCtx ? { childOf: parentCtx } : {}), type: "worker" },
-        async (span) => {
-          if (span) {
+        "queue.process",
+        { ...(parentCtx ? { childOf: parentCtx } : {}), tags },
+        async () => {
+          try {
+            let payload: unknown = m.Body;
             try {
-              let payload: unknown = m.Body;
-              try {
-                payload = JSON.parse(m.Body || "{}");
-              } catch {
-                console.error("could not parse payload");
-              }
-              console.log({ payload, role }, "retrieved payload from queue");
-
-              if (role === "second") {
-                console.log(
-                  {
-                    from: role,
-                    ts: Date.now(),
-                  },
-                  "publishing reply",
-                );
-                await publish({
-                  payload: { replyFrom: role, ts: Date.now() },
-                  topicName: myTopicName,
-                });
-              }
-
-              await sqs.send(
-                new DeleteMessageCommand({
-                  QueueUrl,
-                  ReceiptHandle: m.ReceiptHandle,
-                }),
-              );
-            } catch (e) {
-              console.error("error while polling", e);
+              payload = JSON.parse(m.Body || "{}");
+            } catch {
+              console.error("could not parse payload");
             }
-          } else {
-            console.error("no span detected");
+
+            console.log({ payload, role }, "retrieved payload from queue");
+
+            if (role === "second") {
+              console.log(
+                {
+                  from: role,
+                  ts: Date.now(),
+                },
+                "publishing reply",
+              );
+
+              await publish({
+                payload: { replyFrom: role, ts: Date.now() },
+                topicName: myTopicName,
+              });
+            }
+
+            await sqs.send(
+              new DeleteMessageCommand({
+                QueueUrl,
+                ReceiptHandle: m.ReceiptHandle,
+              }),
+            );
+          } catch (e) {
+            console.error("error while polling", e);
           }
         },
       );

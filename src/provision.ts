@@ -6,7 +6,6 @@ import {
   SetQueueAttributesCommand,
 } from "@aws-sdk/client-sqs";
 import { sns, sqs } from "./aws.ts";
-import { config } from "./config/index.ts";
 
 async function ensureTopic(name: string) {
   const { TopicArn } = await sns.send(new CreateTopicCommand({ Name: name }));
@@ -58,9 +57,6 @@ async function subscribe(topicArn: string, queueArn: string) {
 }
 
 export async function runProvision() {
-  const ACCOUNT = config.get("ACCOUNT_NUMBER");
-  const region = config.get("AWS_REGION");
-
   const FIRST_TOPIC = "first";
   const FIRST_QUEUE = "first";
   const SECOND_TOPIC = "second";
@@ -115,10 +111,8 @@ export async function runProvision() {
   }
 
   console.log("successfully provisioned topics, queues, subscriptions", {
-    account: ACCOUNT,
     firstQueueArn,
     firstTopicArn,
-    region,
     secondQueueArn,
     secondTopicArn,
   });

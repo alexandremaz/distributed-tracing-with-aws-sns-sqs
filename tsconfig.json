@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "allowImportingTsExtensions": true,
     "declaration": true,
     "declarationMap": true,
     "exactOptionalPropertyTypes": true,
@@ -11,6 +10,7 @@
     "noUncheckedIndexedAccess": true,
     "noUncheckedSideEffectImports": true,
     "outDir": "./dist",
+    "rewriteRelativeImportExtensions":true,
     "rootDir": "./src",
     "skipLibCheck": true,
     "sourceMap": true,

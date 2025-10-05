@@ -4,7 +4,7 @@ import { pollLoop } from "./consume.ts";
 import { runProvision } from "./provision.ts";
 
 async function main() {
-  const env = config.all();
+  const env = config;
   const { ROLE } = env;
 
   if (ROLE === "provision") {

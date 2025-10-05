@@ -1,7 +1,7 @@
-import { Config } from "./config.ts";
+import { loadConfig } from "./config.ts";
 import { schema } from "./schema.ts";
 
-export const config = new Config({
+export const config = loadConfig({
   env: process.env,
   schema,
 });

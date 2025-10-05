@@ -1,40 +1,41 @@
 import { z } from "zod";
 
-export class Config<T extends z.ZodType> {
-  private readonly config: z.infer<T>;
+const loggMessageSuffix = "while trying to validate environment variables";
 
-  constructor({
-    env,
-    schema,
-  }: {
-    env: Record<string, string | undefined>;
-    schema: T;
-  }) {
-    const result = schema.safeParse(env);
+export function loadConfig<T extends z.ZodType>({
+  env,
+  schema,
+}: {
+  env: Record<string, string | undefined>;
+  schema: T;
+}): z.infer<T> {
+  const safeParseResult = schema.safeParse(env);
 
-    if (!result.success) {
-      const { fieldErrors, formErrors } = z.flattenError(result.error);
+  if (!safeParseResult.success) {
+    try {
+      const invalidValues = safeParseResult.error.issues.map((issue) => ({
+        issueInvalidValue: issue.path.reduce(
+          // biome-ignore lint/suspicious/noExplicitAny: path has already been accessed by zod
+          (obj: any, key) => obj?.[key],
+          env,
+        ),
+        issueMessage: issue.message,
+        issuePath: issue.path.join("."),
+      }));
 
-      const errorMessage = `[config] parsing environment configuration failed: schema validation error`;
-
-      console.error(
+      console.debug(
         {
-          formErrors,
-          ...fieldErrors,
+          count: invalidValues.length,
+          invalidValues: JSON.stringify(invalidValues),
         },
-        errorMessage,
+        `Invalid values found ${loggMessageSuffix}`,
       );
-      throw new Error(errorMessage);
+    } catch (error) {
+      console.error(error, `Error ${loggMessageSuffix}`);
     }
 
-    this.config = result.data;
+    throw new Error(z.prettifyError(safeParseResult.error));
   }
 
-  get<K extends keyof z.infer<T>>(key: K): z.infer<T>[K] {
-    return this.config[key];
-  }
-
-  all(): Readonly<z.infer<T>> {
-    return this.config;
-  }
+  return safeParseResult.data;
 }
