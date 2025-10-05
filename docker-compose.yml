@@ -70,8 +70,8 @@ services:
           *polling-environment-variables,
         ]
       ROLE: first
-      MY_TOPIC: first
-      MY_QUEUE: first
+      MY_TOPIC: first-topic
+      MY_QUEUE: first-queue
       DD_SERVICE: first-microservice
     volumes:
       - ./src/:/app/src/
@@ -95,8 +95,8 @@ services:
           *polling-environment-variables,
         ]
       ROLE: second
-      MY_TOPIC: second
-      MY_QUEUE: second
+      MY_TOPIC: second-topic
+      MY_QUEUE: second-queue
       DD_SERVICE: second-microservice
     volumes:
       - ./src/:/app/src/

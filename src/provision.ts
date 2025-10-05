@@ -57,10 +57,10 @@ async function subscribe(topicArn: string, queueArn: string) {
 }
 
 export async function runProvision() {
-  const FIRST_TOPIC = "first";
-  const FIRST_QUEUE = "first";
-  const SECOND_TOPIC = "second";
-  const SECOND_QUEUE = "second";
+  const FIRST_TOPIC = "first-topic";
+  const FIRST_QUEUE = "first-queue";
+  const SECOND_TOPIC = "second-topic";
+  const SECOND_QUEUE = "second-queue";
 
   const firstTopicArn = await ensureTopic(FIRST_TOPIC);
   const secondTopicArn = await ensureTopic(SECOND_TOPIC);
