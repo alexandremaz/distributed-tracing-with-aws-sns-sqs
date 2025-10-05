@@ -2,7 +2,15 @@ import { CreateTopicCommand, PublishCommand } from "@aws-sdk/client-sns";
 
 import { sns } from "./aws.ts";
 
+const topicCache = new Map<string, string>();
+
 async function getTopicArn({ topicName }: { topicName: string }) {
+  const topicArnFromCache = topicCache.get(topicName);
+
+  if (topicArnFromCache) {
+    return topicArnFromCache;
+  }
+
   const { TopicArn: topicArn } = await sns.send(
     new CreateTopicCommand({
       Name: topicName,
@@ -12,6 +20,8 @@ async function getTopicArn({ topicName }: { topicName: string }) {
   if (!topicArn) {
     throw new Error(`No topicArn was retrieved for topic ${topicName}`);
   }
+
+  topicCache.set(topicName, topicArn);
 
   return topicArn;
 }
