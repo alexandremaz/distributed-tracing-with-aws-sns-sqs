@@ -2,13 +2,6 @@ x-common-dns: &localstack-dns
   dns:
     - 10.0.2.20
 
-x-aws-environment-variables: &aws-environment-variables
-  AWS_REGION: eu-west-3
-  AWS_ACCESS_KEY_ID: "000000000000"
-  AWS_SECRET_ACCESS_KEY: "000000000000"
-  AWS_ENDPOINT_URL_SNS: http://sns.eu-west-3.localhost.localstack.cloud:4566
-  AWS_ENDPOINT_URL_SQS: http://sqs.eu-west-3.localhost.localstack.cloud:4566
-
 x-dd-trace-environment-variables: &dd-trace-environment-variables
   DD_TRACE_AGENT_HOSTNAME: datadog
   DD_TRACE_AGENT_PORT: 8126
@@ -63,8 +56,8 @@ services:
       - "-var=AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}"
       - "-var=AWS_ENDPOINT_URL_SNS=${AWS_ENDPOINT_URL_SNS}"
       - "-var=AWS_ENDPOINT_URL_SQS=${AWS_ENDPOINT_URL_SQS}"
-    environment:
-      <<: *aws-environment-variables
+    env_file:
+      - ./aws-localstack-env/aws.localstack.env
 
   first-microservice:
     container_name: first-microservice
@@ -78,16 +71,13 @@ services:
       terraform-apply:
         condition: service_completed_successfully
     environment:
-      <<:
-        [
-          *aws-environment-variables,
-          *dd-trace-environment-variables,
-          *polling-environment-variables,
-        ]
+      <<: [*dd-trace-environment-variables, *polling-environment-variables]
       ROLE: first
       MY_TOPIC: first-topic
       MY_QUEUE: first-queue
       DD_SERVICE: first-microservice
+    env_file:
+      - ./aws-localstack-env/aws.localstack.env
 
   second-microservice:
     container_name: second-microservice
@@ -101,16 +91,13 @@ services:
       terraform-apply:
         condition: service_completed_successfully
     environment:
-      <<:
-        [
-          *aws-environment-variables,
-          *dd-trace-environment-variables,
-          *polling-environment-variables,
-        ]
+      <<: [*dd-trace-environment-variables, *polling-environment-variables]
       ROLE: second
       MY_TOPIC: second-topic
       MY_QUEUE: second-queue
       DD_SERVICE: second-microservice
+    env_file:
+      - ./aws-localstack-env/aws.localstack.env
 
   datadog:
     image: "gcr.io/datadoghq/agent:7"
