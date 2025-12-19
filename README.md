@@ -1,7 +1,6 @@
-fill `.env` like `example.env` with a valid crendential
 just run `docker compose up`
 
+![alt text](image.png)
 
-![flamegraph](flamegraph.png)
+it works !
 
-![waterfall](waterfall.png)

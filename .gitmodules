@@ -1,0 +1,3 @@
+[submodule "aws-localstack-env"]
+	path = aws-localstack-env
+	url = git@github.com:alexandremaz/central-aws-localstack-config.git
