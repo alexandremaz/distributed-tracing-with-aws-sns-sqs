@@ -2,9 +2,6 @@ x-common-dns: &localstack-dns
   dns:
     - 10.0.2.20
 
-x-polling-environment-variables: &polling-environment-variables
-  POLLING_DELAY_MILLISECONDS: 5000
-
 services:
   localstack:
     image: localstack/localstack:4.7
@@ -24,37 +21,7 @@ services:
     volumes:
       - ./localstack-healthcheck.py:/localstack-healthcheck.py:ro
 
-  terraform-init:
-    image: hashicorp/terraform:1.13.3
-    working_dir: /workspace
-    volumes:
-      - ./terraform:/workspace
-    entrypoint: [ "terraform" ]
-    command: [ "init" ]
-
-  terraform-apply:
-    <<: *localstack-dns
-    image: hashicorp/terraform:1.13.3
-    depends_on:
-      terraform-init:
-        condition: service_completed_successfully
-    working_dir: /workspace
-    volumes:
-      - ./terraform:/workspace
-    entrypoint: [ "terraform" ]
-    command:
-      - apply
-      - "-auto-approve"
-      - "-var=AWS_REGION=${AWS_REGION}"
-      - "-var=AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}"
-      - "-var=AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}"
-      - "-var=AWS_ENDPOINT_URL_SNS=${AWS_ENDPOINT_URL_SNS}"
-      - "-var=AWS_ENDPOINT_URL_SQS=${AWS_ENDPOINT_URL_SQS}"
-      - "-var=AWS_ENDPOINT_URL_S3=${AWS_ENDPOINT_URL_S3}"
-    env_file:
-      - ./aws-localstack-env/aws.localstack.env
-
-  first-microservice:
+  my-app:
     container_name: first-microservice
     <<: *localstack-dns
     build:
@@ -63,34 +30,12 @@ services:
     depends_on:
       localstack:
         condition: service_healthy
-      terraform-apply:
-        condition: service_completed_successfully
-    environment:
-      <<: *polling-environment-variables
-      ROLE: first
-      MY_TOPIC: first-topic
-      MY_QUEUE: first-queue
     env_file:
       - ./aws-localstack-env/aws.localstack.env
-
-  second-microservice:
-    container_name: second-microservice
-    <<: *localstack-dns
-    build:
-      context: .
-      dockerfile: ./Dockerfile
-    depends_on:
-      localstack:
-        condition: service_healthy
-      terraform-apply:
-        condition: service_completed_successfully
-    environment:
-      <<: *polling-environment-variables
-      ROLE: second
-      MY_TOPIC: second-topic
-      MY_QUEUE: second-queue
-    env_file:
-      - ./aws-localstack-env/aws.localstack.env
+    volumes:
+      - ./src:/app/src
+      - ./package.json:/app/package.json
+    command: "npm run dev"
 
 networks:
   default:
