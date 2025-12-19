@@ -27,6 +27,10 @@ variable "AWS_ENDPOINT_URL_SQS" {
   type = string
 }
 
+variable "AWS_ENDPOINT_URL_S3" {
+  type = string
+}
+
 provider "aws" {
   region     = var.AWS_REGION
   access_key = var.AWS_ACCESS_KEY_ID
@@ -39,6 +43,7 @@ provider "aws" {
   endpoints {
     sns = var.AWS_ENDPOINT_URL_SNS
     sqs = var.AWS_ENDPOINT_URL_SQS
+    s3 = var.AWS_ENDPOINT_URL_S3
   }
 }
 
@@ -109,5 +114,23 @@ output "provisioning_summary" {
     subscriptions = {
       for k, v in aws_sns_topic_subscription.subscriptions : k => v.arn
     }
+  }
+}
+
+//directly took from https://registry.terraform.io/providers/hashicorp/aws/6.15.0/docs/resources/s3_bucket_notification#example-usage
+resource "aws_sns_topic" "topic" {
+  name   = "my-s3-event-notification-topic"
+}
+
+resource "aws_s3_bucket" "bucket" {
+  bucket = "my-bucket"
+}
+
+resource "aws_s3_bucket_notification" "bucket_notification" {
+  bucket = aws_s3_bucket.bucket.id
+
+  topic {
+    topic_arn     = aws_sns_topic.topic.arn
+    events        = ["s3:ObjectCreated:Put"]
   }
 }

@@ -1,4 +1,6 @@
-FROM node:22.20.0-alpine3.22 AS build
+ARG NODE_IMAGE=24.12.0-alpine3.23
+
+FROM node:${NODE_IMAGE} AS build
 
 WORKDIR /app
 
@@ -10,7 +12,7 @@ COPY src ./src
 RUN npm run build
 
 
-FROM node:22.20.0-alpine3.22 AS runner
+FROM node:${NODE_IMAGE} AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 

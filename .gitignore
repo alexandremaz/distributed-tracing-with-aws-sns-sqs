@@ -5,3 +5,4 @@ dist
 terraform/*
 !terraform/main.tf
 !terraform/.terraform.lock.hcl
+!terraform/topology.json

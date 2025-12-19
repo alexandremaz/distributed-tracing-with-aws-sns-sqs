@@ -1,4 +1,3 @@
-import "./tracing.ts";
 import { config } from "./config/index.ts";
 import { pollLoop } from "./consume.ts";
 
